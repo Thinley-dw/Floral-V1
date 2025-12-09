@@ -18,7 +18,7 @@ server = app.server
 
 
 def main() -> None:
-    app.run_server(debug=True)
+    app.run(debug=True)
 
 
 if __name__ == "__main__":

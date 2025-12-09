@@ -3,10 +3,12 @@ from __future__ import annotations
 from math import ceil, comb
 
 from floral_v1.core.models import GensetDesign, UserRequest
+from floral_v1.logging_config import get_logger
 
 # Defaults derived from AvailabilityDesigner.py
 DEFAULT_CHP_SIZE_MW = 2.5
 MTBF_CHP = 12000
+logger = get_logger(__name__)
 
 
 def estimate_chp_availability() -> float:
@@ -52,20 +54,38 @@ def size_gensets(request: UserRequest) -> GensetDesign:
     """
     Availability-driven genset sizing derived from AvailabilityDesigner.py.
     """
-    chp_size = request.genset_size_mw or DEFAULT_CHP_SIZE_MW
-    required_units, installed_units = size_chp_fleet(
-        request.target_load_mw, request.availability_target, chp_size
+    logger.info(
+        "Sizing gensets for project %s | target_load=%.2f MW availability_target=%.4f",
+        request.project_name,
+        request.target_load_mw,
+        request.availability_target,
     )
-    expected_availability = k_out_of_n_availability(
-        installed_units, required_units, estimate_chp_availability()
-    )
-    notes = (
-        f"Derived using AvailabilityDesigner logic with {chp_size:.2f} MW engines."
-    )
-    return GensetDesign(
-        required_units=required_units,
-        installed_units=installed_units,
-        per_unit_mw=chp_size,
-        expected_availability=expected_availability,
-        notes=notes,
-    )
+    try:
+        chp_size = request.genset_size_mw or DEFAULT_CHP_SIZE_MW
+        required_units, installed_units = size_chp_fleet(
+            request.target_load_mw, request.availability_target, chp_size
+        )
+        expected_availability = k_out_of_n_availability(
+            installed_units, required_units, estimate_chp_availability()
+        )
+        notes = (
+            f"Derived using AvailabilityDesigner logic with {chp_size:.2f} MW engines."
+        )
+        design = GensetDesign(
+            required_units=required_units,
+            installed_units=installed_units,
+            per_unit_mw=chp_size,
+            expected_availability=expected_availability,
+            notes=notes,
+        )
+        logger.info(
+            "Sized gensets: required=%d installed=%d per_unit=%.2f expected_avail=%.4f",
+            design.required_units,
+            design.installed_units,
+            design.per_unit_mw,
+            design.expected_availability,
+        )
+        return design
+    except Exception:
+        logger.exception("Failed to size gensets for project %s", request.project_name)
+        raise

@@ -1,0 +1,26 @@
+﻿{
+  "finance": {
+    "discount_rate": 0.1,
+    "project_life_years": 25
+  },
+  "pv": {
+    "capex_per_kw": 1150, 
+    "opex_per_kwh_per_year": 0.015,
+    "lifetime_years": 25,
+    "installation_density_kw_per_acre": 172,
+    "panel_efficiency": 0.2
+  },
+  "bess": {
+    "capex_per_kwh": 550,
+    "opex_per_kwh_per_year": 0.42,
+    "lifetime_years": 12,
+    "energy_density_kwh_per_acre": 71000
+  },
+  "genset": {
+    "capex_per_kw": 1559,
+    "opex_per_kwh": 0.0249
+  },
+  "fuel": {
+    "cost_per_kwh": 0.132
+  }
+}

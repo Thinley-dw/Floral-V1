@@ -102,6 +102,8 @@ class SimulationConfig:
 
     hours: int = 168
     seed: Optional[int] = None
+    mode: str = "stochastic"  # stochastic | scheduled | hybrid
+    schedule: Optional[List[Dict[str, int]]] = None
 
 
 @dataclass
@@ -112,4 +114,4 @@ class SimulationResult:
     outage_hours: float
     unserved_energy_mwh: float
     metadata: Dict[str, float] = field(default_factory=dict)
-
+    timeseries: Dict[str, List[float]] = field(default_factory=dict)

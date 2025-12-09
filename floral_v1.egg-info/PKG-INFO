@@ -1,0 +1,82 @@
+Metadata-Version: 2.4
+Name: floral-v1
+Version: 0.1.0
+Summary: Integrated CHP/PV/BESS availability, optimization, and DES planner with Dash UI
+Author: Floral Energy
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: numpy>=2.3.4
+Requires-Dist: pandas>=2.3.3
+Requires-Dist: scipy>=1.16.2
+Requires-Dist: simpy
+Requires-Dist: networkx
+Requires-Dist: matplotlib>=3.10.7
+Requires-Dist: matplotlib-map-utils>=3.1.1
+Requires-Dist: matplotlib-scalebar>=0.9.0
+Requires-Dist: plotly
+Requires-Dist: dash>=2.0.0
+Requires-Dist: fastapi
+Requires-Dist: uvicorn[standard]
+Requires-Dist: pydantic>=2.0
+Requires-Dist: python-multipart
+Requires-Dist: requests
+Requires-Dist: PyYAML
+Requires-Dist: openai
+Requires-Dist: streamlit
+Requires-Dist: shapely>=2.1.2
+Requires-Dist: geopandas>=1.1.1
+Requires-Dist: fiona
+Requires-Dist: pyproj
+Requires-Dist: rasterio>=1.4.3
+Requires-Dist: rioxarray>=0.19.0
+Requires-Dist: stackstac>=0.5.1
+Requires-Dist: xarray
+Requires-Dist: dask
+Requires-Dist: contextily>=1.6.2
+Requires-Dist: folium>=0.20.0
+Requires-Dist: osmnx>=2.0.6
+Requires-Dist: simanneal>=0.5.0
+Requires-Dist: tqdm>=4.67.1
+Requires-Dist: xyzservices>=2025.4.0
+Requires-Dist: Pillow
+Requires-Dist: geopy
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+
+# Floral-V1
+
+## Dash Application
+
+Activate the virtual environment and launch the interactive planner with:
+
+```bash
+source .venv/bin/activate
+python -m floral_v1.app.app
+```
+
+This starts the Dash UI, which walks through the full pipeline:
+`size_gensets -> build_site_model -> place_assets -> optimize_hybrid -> verify_availability -> run_des -> export`.
+
+## Smoke Scenarios
+
+Run the reference scenarios directly from the CLI:
+
+```bash
+python -m floral_v1.scripts.smoke_pipeline          # demo defaults
+python -m floral_v1.scripts.smoke_pipeline small    # ~3 MW campus
+python -m floral_v1.scripts.smoke_pipeline large    # ~10 MW campus
+```
+
+Each scenario executes the full integrated pipeline and prints a concise summary of genset sizing, hybrid design, analytical availability, and DES metrics.
+
+## Tests
+
+Execute the regression tests with:
+
+```bash
+pytest floral_v1/tests
+```
+
+## Legacy Folders
+
+`DESModel/`, `digital_twin_ryan/`, and `siteplan-visuals/` remain in the repository for reference, but the production code path runs entirely inside `floral_v1/`.

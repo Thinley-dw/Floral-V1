@@ -11,8 +11,8 @@ from PIL import Image
 
 from floral_v1.core.models import Heightmap
 
-SITEPLAN_ROOT = Path(__file__).resolve().parents[3] / "siteplan-visuals"
-FALLBACK_HEIGHTMAP = SITEPLAN_ROOT / "site_heightmap.png"
+DATA_ROOT = Path(__file__).resolve().parent / "data"
+FALLBACK_HEIGHTMAP = DATA_ROOT / "site_heightmap.png"
 
 
 def _chunk(seq: Iterable[str], size: int) -> Iterable[List[str]]:

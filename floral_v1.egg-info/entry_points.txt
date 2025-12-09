@@ -1,0 +1,3 @@
+[console_scripts]
+floral-dash = floral_v1.cli_dash:main
+floral-smoke = floral_v1.cli_smoke:main

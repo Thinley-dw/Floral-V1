@@ -4,6 +4,9 @@ from typing import Dict
 
 from floral_v1.core.des import des_core, des_engine
 from floral_v1.core.models import HybridDesign, SimulationConfig, SimulationResult
+from floral_v1.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 def _build_architecture_payload(hybrid: HybridDesign) -> Dict[str, float]:
@@ -46,33 +49,117 @@ def _build_architecture_payload(hybrid: HybridDesign) -> Dict[str, float]:
     }
 
 
+def _resolve_mode(mode: str) -> str:
+    lookup = {
+        "stochastic": "random",
+        "random": "random",
+        "scheduled": "schedule",
+        "schedule": "schedule",
+        "hybrid": "hybrid",
+    }
+    return lookup.get((mode or "stochastic").lower(), "random")
+
+
 def run_des(hybrid: HybridDesign, sim_config: SimulationConfig) -> SimulationResult:
     """Execute the SimPy DES using the migrated DESModel engine."""
-    hours = max(1, int(sim_config.hours or 0))
-    arch_payload = _build_architecture_payload(hybrid)
-    des_core.configure_arch(arch_payload, sim_hours=hours)
-
-    des_engine.reset_simulation(seed=sim_config.seed, mode="random", schedule=None)
-    if hours > 1:
-        des_engine.fast_forward(hours - 1)
-
-    history = des_engine.get_history() or []
-    diagnostics = des_engine.compute_diagnostics(window_hours=hours)
-    load_mw = arch_payload["load_mw"]
-    unserved_mwh = 0.0
-    for frame in history:
-        served = frame.get("datacenter", {}).get("served_mw", load_mw)
-        unserved_mwh += max(load_mw - float(served), 0.0)
-
-    availability = diagnostics["overall"]["availability_overall"] if diagnostics.get("ready") else 0.0
-    outage_hours = diagnostics["overall"]["hours_underpowered"] if diagnostics.get("ready") else 0.0
-    metadata = {
-        "frames": len(history),
-        "load_mw": load_mw,
-    }
-    return SimulationResult(
-        availability=availability,
-        outage_hours=outage_hours,
-        unserved_energy_mwh=unserved_mwh,
-        metadata=metadata,
+    logger.info(
+        "Running DES for %s | hours=%s seed=%s",
+        hybrid.site.site.name,
+        sim_config.hours,
+        sim_config.seed,
     )
+    try:
+        hours = max(1, int(sim_config.hours or 0))
+        arch_payload = _build_architecture_payload(hybrid)
+        logger.debug("DES architecture payload: %s", arch_payload)
+        des_core.configure_arch(arch_payload, sim_hours=hours)
+
+        des_mode = _resolve_mode(getattr(sim_config, "mode", "stochastic"))
+        schedule = getattr(sim_config, "schedule", None)
+        des_engine.reset_simulation(
+            seed=sim_config.seed,
+            mode=des_mode,
+            schedule=schedule,
+        )
+        if hours > 1:
+            des_engine.fast_forward(hours - 1)
+
+        history = des_engine.get_history() or []
+        diagnostics = des_engine.compute_diagnostics(window_hours=hours)
+        load_mw = arch_payload["load_mw"]
+        energy_pv_mwh = 0.0
+        energy_bess_mwh = 0.0
+        energy_chp_mwh = 0.0
+        energy_unserved_mwh = 0.0
+        timeseries = {
+            "hour": [],
+            "load_mw": [],
+            "served_mw": [],
+            "pv_mw": [],
+            "bess_mw": [],
+            "chp_mw": [],
+            "unserved_mw": [],
+        }
+
+        for idx, frame in enumerate(history):
+            load = float(frame.get("load_mw", load_mw))
+            served = float(frame.get("datacenter", {}).get("served_mw", load))
+            pv_blocks = frame.get("pv", []) or []
+            pv_gen = sum(float(block.get("mw", 0.0)) for block in pv_blocks)
+            bess_dis = float(frame.get("bess", {}).get("discharge_mw", 0.0))
+            chp_gen = max(served - pv_gen - bess_dis, 0.0)
+            unserved = max(load - served, 0.0)
+
+            energy_pv_mwh += pv_gen
+            energy_bess_mwh += bess_dis
+            energy_chp_mwh += chp_gen
+            energy_unserved_mwh += unserved
+
+            timeseries["hour"].append(idx)
+            timeseries["load_mw"].append(load)
+            timeseries["served_mw"].append(served)
+            timeseries["pv_mw"].append(pv_gen)
+            timeseries["bess_mw"].append(bess_dis)
+            timeseries["chp_mw"].append(chp_gen)
+            timeseries["unserved_mw"].append(unserved)
+
+        unserved_mwh = energy_unserved_mwh
+
+        availability = (
+            diagnostics.get("overall", {}).get("availability_overall", 0.0)
+            if diagnostics.get("ready", True)
+            else 0.0
+        )
+        outage_hours = (
+            diagnostics.get("overall", {}).get("hours_underpowered", 0.0)
+            if diagnostics.get("ready", True)
+            else 0.0
+        )
+        metadata = {
+            "frames": len(history),
+            "load_mw": load_mw,
+            "sim_hours": hours,
+            "des_mode": des_mode,
+            "sim_seed": sim_config.seed if sim_config else None,
+            "energy_chp_mwh": energy_chp_mwh,
+            "energy_pv_mwh": energy_pv_mwh,
+            "energy_bess_mwh": energy_bess_mwh,
+            "energy_unserved_mwh": energy_unserved_mwh,
+        }
+        result = SimulationResult(
+            availability=availability,
+            outage_hours=outage_hours,
+            unserved_energy_mwh=unserved_mwh,
+            metadata=metadata,
+            timeseries=timeseries,
+        )
+        logger.info(
+            "DES result availability=%.4f outage_hours=%.2f unserved_mwh=%.2f",
+            result.availability,
+            result.outage_hours,
+            result.unserved_energy_mwh,
+        )
+        return result
+    except Exception:
+        logger.exception("DES run failed for %s", hybrid.site.site.name)
+        raise

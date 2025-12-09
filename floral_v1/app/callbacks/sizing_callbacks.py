@@ -6,6 +6,7 @@ from dash import Input, Output, State
 from dash.exceptions import PreventUpdate
 
 from floral_v1.app.state import (
+    genset_design_from_store,
     serialize_dataclass,
     user_request_from_store,
 )
@@ -15,7 +16,6 @@ from floral_v1.core.sizing.engine import size_gensets
 def register(app):
     @app.callback(
         Output("genset-design-store", "data"),
-        Output("genset-summary", "children"),
         Input("size-gensets-button", "n_clicks"),
         State("user-request-store", "data"),
     )
@@ -28,5 +28,24 @@ def register(app):
         request = user_request_from_store(request_payload)
         design = size_gensets(request)
         payload = serialize_dataclass(design)
-        summary = json.dumps(payload, indent=2)
-        return payload, summary
+        return payload
+
+    @app.callback(
+        Output("genset-summary", "children"),
+        Input("genset-design-store", "data"),
+    )
+    def render_genset_summary(genset_payload):
+        if not genset_payload:
+            return "Run sizing to view genset design."
+
+        design = genset_design_from_store(genset_payload)
+        summary = json.dumps(
+            {
+                "required_units": design.required_units,
+                "installed_units": design.installed_units,
+                "per_unit_mw": design.per_unit_mw,
+                "expected_availability": design.expected_availability,
+            },
+            indent=2,
+        )
+        return summary

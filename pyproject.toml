@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "floral-v1"
+version = "0.1.0"
+description = "Integrated CHP/PV/BESS availability, optimization, and DES planner with Dash UI"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Floral Energy" }]
+dependencies = [
+    "numpy>=2.3.4",
+    "pandas>=2.3.3",
+    "scipy>=1.16.2",
+    "simpy",
+    "networkx",
+    "matplotlib>=3.10.7",
+    "matplotlib-map-utils>=3.1.1",
+    "matplotlib-scalebar>=0.9.0",
+    "plotly",
+    "dash>=2.0.0",
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic>=2.0",
+    "python-multipart",
+    "requests",
+    "PyYAML",
+    "openai",
+    "streamlit",
+    "shapely>=2.1.2",
+    "geopandas>=1.1.1",
+    "fiona",
+    "pyproj",
+    "rasterio>=1.4.3",
+    "rioxarray>=0.19.0",
+    "stackstac>=0.5.1",
+    "xarray",
+    "dask",
+    "contextily>=1.6.2",
+    "folium>=0.20.0",
+    "osmnx>=2.0.6",
+    "simanneal>=0.5.0",
+    "tqdm>=4.67.1",
+    "xyzservices>=2025.4.0",
+    "Pillow",
+    "geopy",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+floral-smoke = "floral_v1.cli_smoke:main"
+floral-dash = "floral_v1.cli_dash:main"
+
+[tool.setuptools.packages.find]
+include = ["floral_v1*"]
+
+[tool.setuptools.package-data]
+"floral_v1.core.optimizer.data" = ["*.json"]
+"floral_v1.core.optimizer.digital_twin.data.raw" = ["*.json"]
+"floral_v1.core.site_plan.data" = ["*.json", "*.geojson", "*.png"]

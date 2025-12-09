@@ -121,6 +121,7 @@ def simulation_result_from_store(data: Dict[str, Any]) -> SimulationResult:
         outage_hours=_maybe_number(data.get("outage_hours"), 0.0),
         unserved_energy_mwh=_maybe_number(data.get("unserved_energy_mwh"), 0.0),
         metadata=dict(data.get("metadata", {})),
+        timeseries=dict(data.get("timeseries", {})),
     )
 
 

@@ -6,8 +6,9 @@ from typing import List
 from dash import Input, Output, State
 from dash.exceptions import PreventUpdate
 
-from floral_v1.app.state import serialize_dataclass
+from floral_v1.app.state import serialize_dataclass, user_request_from_store
 from floral_v1.core.models import SiteContext, UserRequest
+from floral_v1.core.visualization import load_profile_figure
 
 
 def parse_load_profile(text: str) -> List[float]:
@@ -29,7 +30,6 @@ def register(app):
     @app.callback(
         Output("user-request-store", "data"),
         Output("request-status", "children"),
-        Output("request-preview", "children"),
         Input("save-request-button", "n_clicks"),
         State("project-name-input", "value"),
         State("target-load-input", "value"),
@@ -85,6 +85,19 @@ def register(app):
             objectives=objectives,
         )
         payload = serialize_dataclass(request)
-        preview = json.dumps(payload, indent=2)
         status = "User request saved."
-        return payload, status, preview
+        return payload, status
+
+    @app.callback(
+        Output("request-preview", "children"),
+        Output("load-profile-graph", "figure"),
+        Input("user-request-store", "data"),
+    )
+    def render_request_preview(request_payload):
+        if not request_payload:
+            return "No request saved yet.", load_profile_figure([])
+
+        request = user_request_from_store(request_payload)
+        preview = json.dumps(request_payload, indent=2)
+        figure = load_profile_figure(request.load_profile_kw)
+        return preview, figure

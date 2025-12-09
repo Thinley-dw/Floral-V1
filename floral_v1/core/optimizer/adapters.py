@@ -4,18 +4,13 @@ import json
 import math
 from datetime import datetime, timedelta
 from pathlib import Path
-import sys
 from typing import Dict, Iterable, List, Sequence, Tuple
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-DIGITAL_TWIN_SRC = REPO_ROOT / "digital_twin_ryan" / "src"
-if str(DIGITAL_TWIN_SRC) not in sys.path:
-    sys.path.insert(0, str(DIGITAL_TWIN_SRC))
-COST_DATA_PATH = REPO_ROOT / "digital_twin_ryan" / "cost_data.json"
+COST_DATA_PATH = Path(__file__).resolve().parent / "data" / "cost_data.json"
 DEFAULT_SIM_HOURS = 168
 
 import numpy as np
-from digital_twin.simulation.run import run_hourly_simulation
+from floral_v1.core.optimizer.digital_twin.simulation.run import run_hourly_simulation
 from floral_v1.core.models import SiteModel
 
 

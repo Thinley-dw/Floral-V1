@@ -34,3 +34,4 @@ tqdm>=4.67.1
 xyzservices>=2025.4.0
 Pillow
 geopy
+pytest

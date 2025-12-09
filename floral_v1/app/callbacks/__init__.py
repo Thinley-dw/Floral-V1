@@ -3,6 +3,7 @@ from __future__ import annotations
 from dash import Dash
 
 from . import (
+    ai_callbacks,
     availability_callbacks,
     des_callbacks,
     export_callbacks,
@@ -21,3 +22,4 @@ def register_callbacks(app: Dash) -> None:
     availability_callbacks.register(app)
     des_callbacks.register(app)
     export_callbacks.register(app)
+    ai_callbacks.register(app)

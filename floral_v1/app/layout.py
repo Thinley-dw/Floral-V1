@@ -2,6 +2,24 @@ from __future__ import annotations
 
 from dash import dcc, html
 
+from floral_v1.core.visualization import (
+    availability_report_figure,
+    des_energy_split_pie,
+    des_result_figure,
+    des_timeline_figure,
+    hybrid_capacity_figure,
+    load_profile_figure,
+    placement_map_figure,
+)
+from floral_v1.scenarios import list_scenarios
+
+
+def _scenario_options():
+    return [
+        {"label": path.name, "value": str(path)}
+        for path in list_scenarios()
+    ]
+
 
 STORE_IDS = [
     "user-request-store",
@@ -21,6 +39,8 @@ def _default_load_profile() -> str:
 def get_layout():
     stores = [dcc.Store(id=store_id) for store_id in STORE_IDS]
     stores.append(dcc.Store(id="export-status-store"))
+    stores.append(dcc.Store(id="ai-context-store"))
+    stores.append(dcc.Store(id="ai-report-store"))
 
     return html.Div(
         [
@@ -34,6 +54,7 @@ def get_layout():
                     dcc.Tab(label="Site & Placement", value="site-tab", children=_site_tab()),
                     dcc.Tab(label="Optimization", value="optimizer-tab", children=_optimizer_tab()),
                     dcc.Tab(label="Availability & DES", value="des-tab", children=_availability_tab()),
+                    dcc.Tab(label="Floragen AI", value="ai-tab", children=_ai_tab()),
                     dcc.Tab(label="Export", value="export-tab", children=_export_tab()),
                 ],
             ),
@@ -87,6 +108,7 @@ def _inputs_tab():
             ),
             html.Div(id="request-status", className="status-text"),
             html.Pre(id="request-preview", className="code-block"),
+            dcc.Graph(id="load-profile-graph", figure=load_profile_figure([])),
             html.H3("Sizing Output"),
             html.Div(id="genset-summary", className="summary-card"),
         ],
@@ -106,6 +128,7 @@ def _site_tab():
             ),
             html.Div(id="site-summary", className="summary-card"),
             html.Div(id="placement-summary", className="summary-card"),
+            dcc.Graph(id="placement-graph", figure=placement_map_figure(None)),
         ],
     )
 
@@ -117,6 +140,7 @@ def _optimizer_tab():
             html.H3("Hybrid Optimization"),
             html.Button("Optimize Hybrid", id="optimize-hybrid-button", n_clicks=0),
             html.Div(id="hybrid-summary", className="summary-card"),
+            dcc.Graph(id="hybrid-capacity-graph", figure=hybrid_capacity_figure(None)),
         ],
     )
 
@@ -128,11 +152,44 @@ def _availability_tab():
             html.H3("Availability Analysis"),
             html.Button("Analyze Availability", id="availability-button", n_clicks=0),
             html.Div(id="availability-summary", className="summary-card"),
+            dcc.Graph(id="availability-graph", figure=availability_report_figure(None)),
             html.H3("Discrete Event Simulation"),
             html.Label("Simulation Hours"),
             dcc.Input(id="simulation-hours-input", type="number", value=168, min=1, step=1),
+            html.Label("DES Mode"),
+            dcc.Dropdown(
+                id="des-mode-dropdown",
+                options=[
+                    {"label": "Stochastic", "value": "stochastic"},
+                    {"label": "Scheduled", "value": "scheduled"},
+                    {"label": "Hybrid", "value": "hybrid"},
+                ],
+                value="stochastic",
+                clearable=False,
+            ),
             html.Button("Run DES", id="run-des-button", n_clicks=0),
             html.Div(id="des-summary", className="summary-card"),
+            dcc.Graph(id="des-graph", figure=des_result_figure(None)),
+            dcc.Graph(id="des-timeline-graph", figure=des_timeline_figure(None)),
+            dcc.Graph(id="des-energy-pie-graph", figure=des_energy_split_pie(None)),
+        ],
+    )
+
+
+def _ai_tab():
+    return html.Div(
+        className="tab-body",
+        children=[
+            html.H3("Floragen AI"),
+            html.Div(id="ai-info-panel", className="summary-card"),
+            html.Pre(id="ai-report-display", className="code-block"),
+            html.Label("Ask Floragen a question"),
+            dcc.Textarea(
+                id="ai-question-input",
+                style={"width": "100%", "height": "120px"},
+                placeholder="Enter an optional follow-up question...",
+            ),
+            html.Button("Ask Floragen", id="ask-floragen-button", n_clicks=0),
         ],
     )
 
@@ -144,5 +201,25 @@ def _export_tab():
             html.H3("Blender Export"),
             html.Button("Export Blender Bundle", id="export-button", n_clicks=0),
             html.Div(id="export-status", className="summary-card"),
+            html.H3("Scenario Management"),
+            html.Div(
+                className="form-grid",
+                children=[
+                    html.Label("Scenario Name"),
+                    dcc.Input(id="scenario-name-input", type="text", value="demo_scenario"),
+                    html.Label("Save Scenario"),
+                    html.Button("Save Scenario", id="save-scenario-button", n_clicks=0),
+                    html.Label("Saved Scenarios"),
+                    dcc.Dropdown(
+                        id="scenario-file-dropdown",
+                        options=_scenario_options(),
+                        placeholder="Select a scenario file",
+                    ),
+                    html.Label("Load Scenario"),
+                    html.Button("Load Scenario", id="load-scenario-button", n_clicks=0),
+                ],
+            ),
+            html.Div(id="save-scenario-status", className="status-text"),
+            html.Div(id="load-scenario-status", className="status-text"),
         ],
     )
