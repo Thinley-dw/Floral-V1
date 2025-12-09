@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from dash import Input, Output, State
+from dash import Input, Output, State, ctx
 from dash.exceptions import PreventUpdate
 
 from floral_v1.app.state import (
@@ -17,9 +17,15 @@ def register(app):
     @app.callback(
         Output("genset-design-store", "data"),
         Input("size-gensets-button", "n_clicks"),
+        Input("pipeline-output-store", "data"),
         State("user-request-store", "data"),
     )
-    def run_sizing(n_clicks, request_payload):
+    def run_sizing(n_clicks, pipeline_payload, request_payload):
+        triggered = ctx.triggered_id
+        if triggered == "pipeline-output-store":
+            if pipeline_payload and pipeline_payload.get("genset_design"):
+                return pipeline_payload["genset_design"]
+            raise PreventUpdate
         if not n_clicks:
             raise PreventUpdate
         if not request_payload:

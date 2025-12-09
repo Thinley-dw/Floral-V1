@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from dash import Input, Output, State
+from dash import Input, Output, State, ctx
 from dash.exceptions import PreventUpdate
 
 from floral_v1.app.state import (
@@ -22,10 +22,16 @@ def register(app):
         Output("site-model-store", "data"),
         Output("placement-plan-store", "data"),
         Input("build-site-button", "n_clicks"),
+        Input("pipeline-output-store", "data"),
         State("user-request-store", "data"),
         State("genset-design-store", "data"),
     )
-    def build_site_and_place_assets(n_clicks, request_payload, genset_payload):
+    def build_site_and_place_assets(n_clicks, pipeline_payload, request_payload, genset_payload):
+        triggered = ctx.triggered_id
+        if triggered == "pipeline-output-store":
+            if pipeline_payload:
+                return pipeline_payload.get("site_model"), pipeline_payload.get("placement_plan")
+            raise PreventUpdate
         if not n_clicks:
             raise PreventUpdate
         if not request_payload or not genset_payload:

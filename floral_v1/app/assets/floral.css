@@ -1,0 +1,265 @@
+:root {
+    --floral-bg: #0b1220;
+    --floral-card: #151f32;
+    --floral-card-border: rgba(255, 255, 255, 0.05);
+    --floral-text: #e2e8f0;
+    --floral-muted: #94a3b8;
+    --floral-primary: #38bdf8;
+    --floral-accent: #c084fc;
+    --floral-card-shadow: 0 20px 45px rgba(2, 6, 23, 0.45);
+    --floral-radius: 18px;
+    --floral-font: "Inter", "SF Pro Display", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--floral-bg);
+    font-family: var(--floral-font);
+    color: var(--floral-text);
+}
+
+.floral-app {
+    min-height: 100vh;
+    background: radial-gradient(circle at top, rgba(56, 189, 248, 0.08), transparent 60%),
+                linear-gradient(180deg, rgba(15, 23, 42, 0.95), #05070f);
+}
+
+.app-shell {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+}
+
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 28px;
+    border-radius: var(--floral-radius);
+    background-color: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    margin-bottom: 28px;
+    backdrop-filter: blur(16px);
+    box-shadow: var(--floral-card-shadow);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.brand-mark {
+    font-size: 32px;
+    background: rgba(56, 189, 248, 0.15);
+    padding: 12px;
+    border-radius: 14px;
+}
+
+.header-meta {
+    text-align: right;
+    color: var(--floral-muted);
+    font-size: 13px;
+}
+
+.app-content {
+    background-color: rgba(15, 23, 42, 0.35);
+    border-radius: var(--floral-radius);
+    padding: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    box-shadow: var(--floral-card-shadow);
+}
+
+.floral-tabs {
+    background-color: transparent;
+    border-radius: var(--floral-radius);
+}
+
+.floral-tab {
+    background-color: transparent !important;
+    border: none !important;
+    color: var(--floral-muted) !important;
+    font-weight: 600;
+}
+
+.floral-tab--selected {
+    background: rgba(56, 189, 248, 0.08) !important;
+    color: var(--floral-text) !important;
+    border-bottom: 2px solid var(--floral-primary) !important;
+}
+
+.tab-pane {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.floral-card {
+    background-color: var(--floral-card);
+    border-radius: var(--floral-radius);
+    padding: 20px 24px;
+    border: 1px solid var(--floral-card-border);
+    box-shadow: var(--floral-card-shadow);
+}
+
+.floral-card-header h3 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.floral-card-header p {
+    margin-top: 6px;
+    color: var(--floral-muted);
+    font-size: 14px;
+}
+
+.form-grid {
+    display: grid;
+    gap: 18px;
+}
+
+.form-grid.two-col {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.form-column.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-column.two-col {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+}
+
+.input-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--floral-muted);
+    font-size: 13px;
+}
+
+.input-field label {
+    font-weight: 600;
+    color: var(--floral-text);
+}
+
+.text-input,
+.textarea-input,
+.dropdown-input .Select-control {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px;
+    padding: 10px 12px;
+    color: var(--floral-text);
+}
+
+.textarea-input {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: var(--floral-text);
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn.primary {
+    background: linear-gradient(120deg, var(--floral-primary), var(--floral-accent));
+    border: none;
+    color: #0b1220;
+    box-shadow: 0 10px 30px rgba(56, 189, 248, 0.35);
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.status-grid,
+.card-grid.two-col,
+.kpi-grid.two-col {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 18px;
+}
+
+.status-card,
+.kpi-card {
+    background-color: rgba(255, 255, 255, 0.02);
+    border-radius: var(--floral-radius);
+    padding: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    min-height: 140px;
+}
+
+.kpi-label {
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--floral-muted);
+}
+
+.code-block {
+    white-space: pre-wrap;
+    word-break: break-word;
+    background-color: rgba(0, 0, 0, 0.25);
+    border-radius: 12px;
+    padding: 12px;
+    min-height: 80px;
+    font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+    font-size: 13px;
+}
+
+.code-block.tall {
+    min-height: 220px;
+    max-height: 360px;
+    overflow-y: auto;
+}
+
+.status-text {
+    color: var(--floral-muted);
+    margin-top: 12px;
+}
+
+.floragen-hero {
+    text-align: center;
+    padding: 32px;
+    border-radius: var(--floral-radius);
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(124, 58, 237, 0.2));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: var(--floral-card-shadow);
+}
+
+.card-description {
+    color: var(--floral-muted);
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+    .app-header {
+        flex-direction: column;
+        gap: 16px;
+        text-align: center;
+    }
+
+    .header-meta {
+        text-align: center;
+    }
+}

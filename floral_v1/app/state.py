@@ -36,6 +36,9 @@ def site_context_from_store(data: Dict[str, Any]) -> SiteContext:
         altitude_m=_maybe_number(data.get("altitude_m"), 0.0),
         boundary_file=data.get("boundary_file"),
         notes=data.get("notes", ""),
+        boundary_geojson=data.get("boundary_geojson"),
+        entrance_geojson=data.get("entrance_geojson"),
+        gas_line_geojson=data.get("gas_line_geojson"),
     )
 
 

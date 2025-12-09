@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from dash import Input, Output, State
+from dash import Input, Output, State, ctx
 from dash.exceptions import PreventUpdate
 
 from floral_v1.app.state import (
@@ -19,10 +19,16 @@ def register(app):
     @app.callback(
         Output("availability-report-store", "data"),
         Input("availability-button", "n_clicks"),
+        Input("pipeline-output-store", "data"),
         State("hybrid-design-store", "data"),
         State("user-request-store", "data"),
     )
-    def analyze(n_clicks, hybrid_payload, request_payload):
+    def analyze(n_clicks, pipeline_payload, hybrid_payload, request_payload):
+        triggered = ctx.triggered_id
+        if triggered == "pipeline-output-store":
+            if pipeline_payload:
+                return pipeline_payload.get("availability_report")
+            raise PreventUpdate
         if not n_clicks:
             raise PreventUpdate
         if not (hybrid_payload and request_payload):

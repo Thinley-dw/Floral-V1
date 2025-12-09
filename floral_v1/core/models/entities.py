@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -14,6 +14,9 @@ class SiteContext:
     altitude_m: float = 0.0
     boundary_file: Optional[str] = None
     notes: str = ""
+    boundary_geojson: Optional[Dict[str, Any]] = None
+    entrance_geojson: Optional[Dict[str, Any]] = None
+    gas_line_geojson: Optional[Dict[str, Any]] = None
 
 
 @dataclass
@@ -49,7 +52,7 @@ class SiteModel:
     heightmap: Optional[Heightmap]
     footprint_acres: float
     buildable_area_acres: float
-    metadata: Dict[str, str] = field(default_factory=dict)
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass

@@ -1,8 +1,11 @@
 README.md
 pyproject.toml
 floral_v1/__init__.py
+floral_v1/ai_engine.py
 floral_v1/cli_dash.py
 floral_v1/cli_smoke.py
+floral_v1/logging_config.py
+floral_v1/scenarios.py
 floral_v1.egg-info/PKG-INFO
 floral_v1.egg-info/SOURCES.txt
 floral_v1.egg-info/dependency_links.txt
@@ -14,6 +17,7 @@ floral_v1/app/app.py
 floral_v1/app/layout.py
 floral_v1/app/state.py
 floral_v1/app/callbacks/__init__.py
+floral_v1/app/callbacks/ai_callbacks.py
 floral_v1/app/callbacks/availability_callbacks.py
 floral_v1/app/callbacks/des_callbacks.py
 floral_v1/app/callbacks/export_callbacks.py
@@ -59,6 +63,7 @@ floral_v1/core/site_plan/data/site_plan.json
 floral_v1/core/sizing/__init__.py
 floral_v1/core/sizing/engine.py
 floral_v1/core/visualization/__init__.py
+floral_v1/core/visualization/plots.py
 floral_v1/docker/__init__.py
 floral_v1/infra/__init__.py
 floral_v1/scripts/__init__.py

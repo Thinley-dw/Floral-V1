@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from dash import Input, Output, State
+from dash import Input, Output, State, ctx
 from dash.exceptions import PreventUpdate
 
 from floral_v1.app.state import (
@@ -21,12 +21,18 @@ def register(app):
     @app.callback(
         Output("hybrid-design-store", "data"),
         Input("optimize-hybrid-button", "n_clicks"),
+        Input("pipeline-output-store", "data"),
         State("user-request-store", "data"),
         State("site-model-store", "data"),
         State("genset-design-store", "data"),
         State("placement-plan-store", "data"),
     )
-    def optimize(n_clicks, request_payload, site_payload, genset_payload, placement_payload):
+    def optimize(n_clicks, pipeline_payload, request_payload, site_payload, genset_payload, placement_payload):
+        triggered = ctx.triggered_id
+        if triggered == "pipeline-output-store":
+            if pipeline_payload:
+                return pipeline_payload.get("hybrid_design")
+            raise PreventUpdate
         if not n_clicks:
             raise PreventUpdate
         if not (request_payload and site_payload and genset_payload and placement_payload):

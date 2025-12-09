@@ -1,15 +1,19 @@
 from __future__ import annotations
 
-from textwrap import dedent
-
 from dash import dcc, html
+
+from floral_v1.app.feature_flags import DASH_LEAFLET, HAS_DASH_LEAFLET
+
+if HAS_DASH_LEAFLET:
+    dl = DASH_LEAFLET
+else:
+    dl = None
 
 
 def get_layout():
     return html.Div(
         className="floral-app",
         children=[
-            html.Style(_GLOBAL_STYLES),
             _stores(),
             html.Div(
                 className="app-shell",
@@ -88,6 +92,8 @@ def _stores() -> html.Div:
             dcc.Store(id="simulation-result-store"),
             dcc.Store(id="ai-context-store"),
             dcc.Store(id="ai-report-store"),
+            dcc.Store(id="site-geometry-store", data={"boundary": None, "entrance": None, "gas_line": None}),
+            dcc.Store(id="pipeline-output-store"),
         ],
     )
 
@@ -125,7 +131,7 @@ def _inputs_tab() -> html.Div:
         children=[
             _card(
                 "Project & Site Setup",
-                "Define the fundamentals for your deployment.",
+                "Provide headline information for the project and site.",
                 html.Div(
                     className="form-grid two-col",
                     children=[
@@ -142,30 +148,21 @@ def _inputs_tab() -> html.Div:
                                     ),
                                 ),
                                 _input_field(
-                                    "Target Load (MW)",
+                                    "Site Name",
                                     dcc.Input(
-                                        id="target-load-input",
-                                        type="number",
-                                        placeholder="10",
+                                        id="site-name-input",
+                                        type="text",
+                                        placeholder="Aurora Campus East",
                                         className="text-input",
                                     ),
                                 ),
                                 _input_field(
-                                    "Availability Target",
-                                    dcc.Input(
-                                        id="availability-target-input",
-                                        type="number",
-                                        placeholder="0.999",
-                                        className="text-input",
-                                    ),
-                                ),
-                                _input_field(
-                                    "Genset Size (MW)",
-                                    dcc.Input(
-                                        id="genset-size-input",
-                                        type="number",
-                                        placeholder="2.5",
-                                        className="text-input",
+                                    "Site Notes",
+                                    dcc.Textarea(
+                                        id="site-notes-input",
+                                        placeholder="e.g. brownfield redevelopment, close to LNG terminal...",
+                                        className="textarea-input",
+                                        spellCheck=False,
                                     ),
                                 ),
                             ],
@@ -178,7 +175,7 @@ def _inputs_tab() -> html.Div:
                                     dcc.Input(
                                         id="latitude-input",
                                         type="number",
-                                        placeholder="37.7749",
+                                        placeholder="1.3521",
                                         className="text-input",
                                     ),
                                 ),
@@ -187,7 +184,7 @@ def _inputs_tab() -> html.Div:
                                     dcc.Input(
                                         id="longitude-input",
                                         type="number",
-                                        placeholder="-122.4194",
+                                        placeholder="103.8198",
                                         className="text-input",
                                     ),
                                 ),
@@ -201,11 +198,11 @@ def _inputs_tab() -> html.Div:
                                     ),
                                 ),
                                 _input_field(
-                                    "PV Land (m²)",
+                                    "Ambient Temperature (°C)",
                                     dcc.Input(
-                                        id="pv-land-input",
+                                        id="ambient-input",
                                         type="number",
-                                        placeholder="100000",
+                                        placeholder="25",
                                         className="text-input",
                                     ),
                                 ),
@@ -215,13 +212,34 @@ def _inputs_tab() -> html.Div:
                 ),
             ),
             _card(
-                "Load & Objectives",
-                "Describe the expected demand shape and optimization priorities.",
+                "Load & Environment",
+                "Describe the target load, availability goal, and hourly demand profile.",
                 html.Div(
-                    className="form-grid",
+                    className="form-grid two-col",
                     children=[
                         html.Div(
-                            className="form-column full-width",
+                            className="form-column",
+                            children=[
+                                _input_field(
+                                    "Target Load (MW)",
+                                    dcc.Input(id="target-load-input", type="number", placeholder="10", className="text-input"),
+                                ),
+                                _input_field(
+                                    "Availability Target",
+                                    dcc.Input(id="availability-target-input", type="number", placeholder="0.999", className="text-input"),
+                                ),
+                                _input_field(
+                                    "Genset Size (MW)",
+                                    dcc.Input(id="genset-size-input", type="number", placeholder="2.5", className="text-input"),
+                                ),
+                                _input_field(
+                                    "PV Land (m²)",
+                                    dcc.Input(id="pv-land-input", type="number", placeholder="100000", className="text-input"),
+                                ),
+                            ],
+                        ),
+                        html.Div(
+                            className="form-column",
                             children=[
                                 _input_field(
                                     "Load Profile (kW, csv or newline)",
@@ -235,35 +253,48 @@ def _inputs_tab() -> html.Div:
                                 ),
                             ],
                         ),
-                        html.Div(
-                            className="form-column two-col",
-                            children=[
-                                _input_field(
-                                    "Objective Weight – LCOE",
-                                    dcc.Input(
-                                        id="objective-lcoe-input",
-                                        type="number",
-                                        placeholder="0.5",
-                                        className="text-input",
-                                    ),
-                                ),
-                                _input_field(
-                                    "Objective Weight – Emissions",
-                                    dcc.Input(
-                                        id="objective-emissions-input",
-                                        type="number",
-                                        placeholder="0.5",
-                                        className="text-input",
-                                    ),
-                                ),
-                            ],
-                        ),
                     ],
                 ),
             ),
             _card(
-                "Save Request & Size Gensets",
-                "Persist the scenario before sizing and progressing downstream.",
+                "Optimization Objectives",
+                "Choose whether to prioritize LCOE, emissions, or a weighted tradeoff.",
+                html.Div(
+                    className="form-grid",
+                    children=[
+                        _input_field(
+                            "Objective Mode",
+                            dcc.RadioItems(
+                                id="objective-mode-radio",
+                                options=[
+                                    {"label": "Minimize LCOE", "value": "lcoe"},
+                                    {"label": "Minimize Emissions", "value": "emissions"},
+                                    {"label": "Weighted Tradeoff", "value": "weighted"},
+                                ],
+                                value="lcoe",
+                                className="radio-input",
+                                labelStyle={"display": "inline-block", "margin-right": "12px"},
+                            ),
+                        ),
+                        _input_field(
+                            "LCOE Weight (for weighted mode)",
+                            dcc.Slider(
+                                id="objective-weight-slider",
+                                min=0.0,
+                                max=1.0,
+                                step=0.05,
+                                value=0.5,
+                                tooltip={"placement": "bottom", "always_visible": False},
+                            ),
+                            "Emissions weight becomes 1 - LCOE weight.",
+                        ),
+                    ],
+                ),
+            ),
+            _geometry_card(),
+            _card(
+                "Run Optimization & Preview",
+                "Save inputs, run single steps, or trigger the entire pipeline.",
                 html.Div(
                     children=[
                         html.Div(
@@ -271,6 +302,7 @@ def _inputs_tab() -> html.Div:
                             children=[
                                 html.Button("Save Request", id="save-request-button", className="btn primary"),
                                 html.Button("Size Gensets", id="size-gensets-button", className="btn"),
+                                html.Button("Optimize System", id="run-full-pipeline-button", className="btn primary"),
                             ],
                         ),
                         html.Div(
@@ -286,23 +318,25 @@ def _inputs_tab() -> html.Div:
                                 html.Div(
                                     className="status-card",
                                     children=[
+                                        html.H4("Pipeline"),
+                                        html.Div("Run Optimize System to populate every stage.", id="pipeline-status"),
+                                    ],
+                                ),
+                                html.Div(
+                                    className="status-card",
+                                    children=[
                                         html.H4("Request Payload"),
                                         html.Pre(id="request-preview", className="code-block"),
                                     ],
                                 ),
                             ],
                         ),
+                        dcc.Graph(id="load-profile-graph", config={"displayModeBar": False}),
                     ],
                 ),
             ),
-            _card(
-                "Load Profile Preview",
-                "Visual confirmation of the submitted load curve.",
-                dcc.Graph(id="load-profile-graph", config={"displayModeBar": False}),
-            ),
         ],
     )
-
 
 def _site_tab() -> html.Div:
     return html.Div(
@@ -649,230 +683,78 @@ def _input_field(label: str, control, description: str | None = None) -> html.Di
     )
 
 
-_GLOBAL_STYLES = dedent(
-    """
-    :root {
-        --floral-bg: #0b1220;
-        --floral-card: #151f32;
-        --floral-card-border: rgba(255, 255, 255, 0.05);
-        --floral-text: #e2e8f0;
-        --floral-muted: #94a3b8;
-        --floral-primary: #38bdf8;
-        --floral-accent: #c084fc;
-        --floral-card-shadow: 0 20px 45px rgba(2, 6, 23, 0.45);
-        --floral-radius: 18px;
-        --floral-font: "Inter", "SF Pro Display", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-    body {
-        margin: 0;
-        padding: 0;
-        background-color: var(--floral-bg);
-        font-family: var(--floral-font);
-        color: var(--floral-text);
-    }
-    .floral-app {
-        min-height: 100vh;
-        background: radial-gradient(circle at top, rgba(56, 189, 248, 0.08), transparent 60%),
-                    linear-gradient(180deg, rgba(15, 23, 42, 0.95), #05070f);
-    }
-    .app-shell {
-        max-width: 1240px;
-        margin: 0 auto;
-        padding: 32px 24px 80px;
-    }
-    .app-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 24px 28px;
-        border-radius: var(--floral-radius);
-        background-color: rgba(15, 23, 42, 0.65);
-        border: 1px solid rgba(255, 255, 255, 0.04);
-        margin-bottom: 28px;
-        backdrop-filter: blur(16px);
-        box-shadow: var(--floral-card-shadow);
-    }
-    .brand {
-        display: flex;
-        align-items: center;
-        gap: 14px;
-    }
-    .brand-mark {
-        font-size: 32px;
-        background: rgba(56, 189, 248, 0.15);
-        padding: 12px;
-        border-radius: 14px;
-    }
-    .header-meta {
-        text-align: right;
-        color: var(--floral-muted);
-        font-size: 13px;
-    }
-    .app-content {
-        background-color: rgba(15, 23, 42, 0.35);
-        border-radius: var(--floral-radius);
-        padding: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.04);
-        box-shadow: var(--floral-card-shadow);
-    }
-    .floral-tabs {
-        background-color: transparent;
-        border-radius: var(--floral-radius);
-    }
-    .floral-tab {
-        background-color: transparent !important;
-        border: none !important;
-        color: var(--floral-muted) !important;
-        font-weight: 600;
-    }
-    .floral-tab--selected {
-        background: rgba(56, 189, 248, 0.08) !important;
-        color: var(--floral-text) !important;
-        border-bottom: 2px solid var(--floral-primary) !important;
-    }
-    .tab-pane {
-        padding: 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 24px;
-    }
-    .floral-card {
-        background-color: var(--floral-card);
-        border-radius: var(--floral-radius);
-        padding: 20px 24px;
-        border: 1px solid var(--floral-card-border);
-        box-shadow: var(--floral-card-shadow);
-    }
-    .floral-card-header h3 {
-        margin: 0;
-        font-size: 20px;
-    }
-    .floral-card-header p {
-        margin-top: 6px;
-        color: var(--floral-muted);
-        font-size: 14px;
-    }
-    .form-grid {
-        display: grid;
-        gap: 18px;
-    }
-    .form-grid.two-col {
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    }
-    .form-column.full-width {
-        grid-column: 1 / -1;
-    }
-    .form-column.two-col {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 16px;
-    }
-    .input-field {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        color: var(--floral-muted);
-        font-size: 13px;
-    }
-    .input-field label {
-        font-weight: 600;
-        color: var(--floral-text);
-    }
-    .text-input, .textarea-input, .dropdown-input .Select-control {
-        background-color: rgba(255, 255, 255, 0.04) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 12px;
-        padding: 10px 12px;
-        color: var(--floral-text);
-    }
-    .textarea-input {
-        min-height: 120px;
-        resize: vertical;
-    }
-    .btn {
-        background: transparent;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        color: var(--floral-text);
-        padding: 10px 18px;
-        border-radius: 999px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    .btn.primary {
-        background: linear-gradient(120deg, var(--floral-primary), var(--floral-accent));
-        border: none;
-        color: #0b1220;
-        box-shadow: 0 10px 30px rgba(56, 189, 248, 0.35);
-    }
-    .btn:hover {
-        transform: translateY(-1px);
-    }
-    .button-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        margin-bottom: 20px;
-    }
-    .status-grid, .card-grid.two-col, .kpi-grid.two-col {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-        gap: 18px;
-    }
-    .status-card, .kpi-card {
-        background-color: rgba(255, 255, 255, 0.02);
-        border-radius: var(--floral-radius);
-        padding: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        min-height: 140px;
-    }
-    .kpi-label {
-        font-size: 13px;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: var(--floral-muted);
-    }
-    .code-block {
-        white-space: pre-wrap;
-        word-break: break-word;
-        background-color: rgba(0, 0, 0, 0.25);
-        border-radius: 12px;
-        padding: 12px;
-        min-height: 80px;
-        font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
-        font-size: 13px;
-    }
-    .code-block.tall {
-        min-height: 220px;
-        max-height: 360px;
-        overflow-y: auto;
-    }
-    .status-text {
-        color: var(--floral-muted);
-        margin-top: 12px;
-    }
-    .floragen-hero {
-        text-align: center;
-        padding: 32px;
-        border-radius: var(--floral-radius);
-        background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(124, 58, 237, 0.2));
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        box-shadow: var(--floral-card-shadow);
-    }
-    .card-description {
-        color: var(--floral-muted);
-        font-size: 14px;
-        margin-bottom: 10px;
-    }
-    @media (max-width: 768px) {
-        .app-header {
-            flex-direction: column;
-            gap: 16px;
-            text-align: center;
-        }
-        .header-meta {
-            text-align: center;
-        }
-    }
-    """
-)
+def _geometry_card() -> html.Div:
+    if HAS_DASH_LEAFLET:
+        geometry_control = dl.Map(
+            id="site-geometry-map",
+            center=[1.3521, 103.8198],
+            zoom=4,
+            style={"width": "100%", "height": "420px", "border-radius": "14px"},
+            children=[
+                dl.TileLayer(),
+                dl.FeatureGroup(
+                    children=[
+                        dl.GeoJSON(
+                            id="site-geometry-preview",
+                            data={"type": "FeatureCollection", "features": []},
+                        ),
+                        dl.DrawControl(
+                            id="geometry-draw-control",
+                            draw={
+                                "polyline": True,
+                                "polygon": True,
+                                "rectangle": False,
+                                "circle": False,
+                                "circlemarker": False,
+                                "marker": True,
+                            },
+                            edit=True,
+                            position="topleft",
+                        ),
+                    ]
+                ),
+            ],
+        )
+    else:
+        geometry_control = html.Div(
+            children=[
+                html.Div(
+                    [
+                        html.P(
+                            "dash-leaflet is not installed; enter GeoJSON manually or install the optional dependency.",
+                            className="card-description",
+                        ),
+                        html.P(
+                            "Install inside the active virtualenv: pip install dash-leaflet",
+                            className="card-description",
+                        ),
+                    ]
+                ),
+                _input_field(
+                    "Geometry JSON (FeatureCollection)",
+                    dcc.Textarea(
+                        id="geometry-json-input",
+                        placeholder='{"boundary": {...}, "entrance": {...}, "gas_line": {...}}',
+                        className="textarea-input",
+                        spellCheck=False,
+                    ),
+                    "Provide GeoJSON for boundary (Polygon), entrance (Point), and gas_line (LineString).",
+                ),
+                html.Button("Load Geometry", id="geometry-json-button", className="btn"),
+                html.Pre(id="site-geometry-preview", className="code-block"),
+            ]
+        )
+
+    return _card(
+        "Site Geometry",
+        "Define the boundary polygon, entrance, and gas line.",
+        html.Div(
+            children=[
+                html.Div(
+                    "Use the interactive canvas when available or paste GeoJSON manually.",
+                    className="card-description",
+                ),
+                geometry_control,
+            ]
+        ),
+    )

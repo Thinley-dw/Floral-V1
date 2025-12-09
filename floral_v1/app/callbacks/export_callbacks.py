@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Optional
 
-from dash import Input, Output, State, no_update
+from dash import Input, Output, State, ctx, no_update
 from dash.exceptions import PreventUpdate
 
 from floral_v1.ai_engine import simulation_config_from_metadata
@@ -17,20 +16,25 @@ from floral_v1.app.state import (
     simulation_result_from_store,
     user_request_from_store,
 )
+from floral_v1.app.paths import EXPORT_ROOT
 from floral_v1.core.site_plan.blender_export import build_blender_package
 from floral_v1.scenarios import list_scenarios, load_scenario, save_scenario
-
-EXPORT_ROOT = Path(__file__).resolve().parents[2] / "exports"
 
 
 def register(app):
     @app.callback(
         Output("export-status", "children"),
         Input("export-button", "n_clicks"),
+        Input("pipeline-output-store", "data"),
         State("site-model-store", "data"),
         State("hybrid-design-store", "data"),
     )
-    def export_bundle(n_clicks, site_payload, hybrid_payload):
+    def export_bundle(n_clicks, pipeline_payload, site_payload, hybrid_payload):
+        triggered = ctx.triggered_id
+        if triggered == "pipeline-output-store":
+            if pipeline_payload and pipeline_payload.get("export_path"):
+                return f"Blender bundle exported to {pipeline_payload['export_path']}"
+            raise PreventUpdate
         if not n_clicks:
             raise PreventUpdate
         if not (site_payload and hybrid_payload):

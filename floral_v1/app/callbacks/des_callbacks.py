@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from dash import Input, Output, State
+from dash import Input, Output, State, ctx
 from dash.exceptions import PreventUpdate
 
 from floral_v1.app.state import (
@@ -23,11 +23,17 @@ def register(app):
     @app.callback(
         Output("simulation-result-store", "data"),
         Input("run-des-button", "n_clicks"),
+        Input("pipeline-output-store", "data"),
         State("hybrid-design-store", "data"),
         State("simulation-hours-input", "value"),
         State("des-mode-dropdown", "value"),
     )
-    def run_des_callback(n_clicks, hybrid_payload, hours_value, mode_value):
+    def run_des_callback(n_clicks, pipeline_payload, hybrid_payload, hours_value, mode_value):
+        triggered = ctx.triggered_id
+        if triggered == "pipeline-output-store":
+            if pipeline_payload:
+                return pipeline_payload.get("simulation_result")
+            raise PreventUpdate
         if not n_clicks:
             raise PreventUpdate
         if not hybrid_payload:

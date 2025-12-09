@@ -7,7 +7,9 @@ from . import (
     availability_callbacks,
     des_callbacks,
     export_callbacks,
+    geometry_callbacks,
     optimizer_callbacks,
+    pipeline_callbacks,
     site_plan_callbacks,
     sizing_callbacks,
     user_callbacks,
@@ -23,3 +25,5 @@ def register_callbacks(app: Dash) -> None:
     des_callbacks.register(app)
     export_callbacks.register(app)
     ai_callbacks.register(app)
+    geometry_callbacks.register(app)
+    pipeline_callbacks.register(app)
